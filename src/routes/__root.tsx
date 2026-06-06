@@ -82,9 +82,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "A portaria digital para o futuro do setor marítimo — agendamento de visitas Wilson Sons." },
       { name: "author", content: "Wilson Sons" },
       { property: "og:title", content: "Wilson Sons Experience Platform" },
-      { property: "og:description", content: "Agende sua visita aos terminais Wilson Sons com segurança e agilidade." },
+      { property: "og:description", content: "A portaria digital para o futuro do setor marítimo — agendamento de visitas Wilson Sons." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Wilson Sons Experience Platform" },
+      { name: "twitter:description", content: "A portaria digital para o futuro do setor marítimo — agendamento de visitas Wilson Sons." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/41b2a35b-3533-45f8-a0c1-d504ec83832b/id-preview-2f6436a0--691860f1-382c-4dc5-8429-5e6b53bd505d.lovable.app-1780709136059.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/41b2a35b-3533-45f8-a0c1-d504ec83832b/id-preview-2f6436a0--691860f1-382c-4dc5-8429-5e6b53bd505d.lovable.app-1780709136059.png" },
     ],
     links: [
       {
