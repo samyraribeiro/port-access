@@ -93,6 +93,7 @@ function Agendar() {
               </button>
             </p>
           </div>
+          <EmailStatus log={emailLog} />
           <div className="mt-6 flex justify-center gap-3">
             <Link to="/" className="rounded-md border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground">
               Voltar ao início
@@ -110,10 +111,14 @@ function Agendar() {
       <p className="mt-3 text-muted-foreground">Preencha os dados para registrar sua visita.</p>
 
       <form
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
+          setSending(true);
           const visit = addVisit({ ...form, quizScore: getQuizScore() });
+          const log = await sendVisitToAppsScript(visit, hostEmail);
+          setEmailLog(log);
           setSubmitted(visit);
+          setSending(false);
         }}
         className="mt-8 grid gap-5 rounded-2xl border border-border bg-card p-6 shadow-sm sm:grid-cols-2"
       >
@@ -155,20 +160,77 @@ function Agendar() {
             <input required className={inputClass} value={form.host} onChange={(e) => setForm({ ...form, host: e.target.value })} placeholder="Nome do host que recebe você" />
           </Field>
         </div>
+        <div className="sm:col-span-2">
+          <Field label="E-mail do host (para notificação)">
+            <input
+              type="email"
+              className={inputClass}
+              value={hostEmail}
+              onChange={(e) => setHostEmail(e.target.value)}
+              placeholder="host@wilsonsons.com.br"
+            />
+          </Field>
+        </div>
 
         <div className="sm:col-span-2 flex justify-end">
           <button
             type="submit"
-            className="inline-flex items-center gap-2 rounded-md bg-accent px-6 py-3 text-sm font-semibold text-accent-foreground shadow-[var(--shadow-accent)] transition-transform hover:scale-[1.02]"
+            disabled={sending}
+            className="inline-flex items-center gap-2 rounded-md bg-accent px-6 py-3 text-sm font-semibold text-accent-foreground shadow-[var(--shadow-accent)] transition-transform hover:scale-[1.02] disabled:opacity-60"
           >
-            Enviar agendamento <ArrowRight className="h-4 w-4" />
+            {sending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Enviando…
+              </>
+            ) : (
+              <>
+                Enviar agendamento <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </button>
         </div>
       </form>
 
       <p className="mt-4 text-xs text-muted-foreground">
-        Integração preparada para Google Sheets + Apps Script (envio automático de e-mails). Dados armazenados localmente nesta demo.
+        Os dados são gravados na planilha Google Sheets via Google Apps Script, com e-mail automático para você e para o host. Configure a URL do Web App em <Link to="/admin" className="font-medium text-primary underline">Admin → Integração</Link>.
       </p>
+    </div>
+  );
+}
+
+function EmailStatus({ log }: { log: EmailLog | null }) {
+  if (!log) return null;
+  if (log.status === "enviado") {
+    return (
+      <div className="mt-5 flex items-start gap-3 rounded-lg border border-accent/30 bg-accent/5 p-4 text-left text-sm">
+        <Mail className="mt-0.5 h-4 w-4 text-accent" />
+        <div>
+          <p className="font-semibold text-foreground">E-mails enviados</p>
+          <p className="text-muted-foreground">
+            Notificação enviada para {log.recipients.visitor} e {log.recipients.host}.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  if (log.status === "nao_configurado") {
+    return (
+      <div className="mt-5 flex items-start gap-3 rounded-lg border border-amber-400/40 bg-amber-50 p-4 text-left text-sm">
+        <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600" />
+        <div>
+          <p className="font-semibold text-foreground">Integração não configurada</p>
+          <p className="text-muted-foreground">{log.message}</p>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-5 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-left text-sm">
+      <AlertTriangle className="mt-0.5 h-4 w-4 text-destructive" />
+      <div>
+        <p className="font-semibold text-foreground">Falha ao enviar e-mails</p>
+        <p className="text-muted-foreground">{log.message}</p>
+      </div>
     </div>
   );
 }
