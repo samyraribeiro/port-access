@@ -2,6 +2,8 @@ import type { Visit } from "./visits";
 
 const URL_KEY = "wilson_apps_script_url_v1";
 const LOG_KEY = "wilson_email_logs_v1";
+const DEFAULT_APPS_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycby1IeBbQBG_EriZbCM4SHoWyKb67IsSd9iROnWF7dcfNny9LFyPdu2ydozjOs-I0sEw/exec";
 
 export type EmailLog = {
   id: string;
@@ -15,7 +17,7 @@ export type EmailLog = {
 
 export function getAppsScriptUrl(): string {
   if (typeof window === "undefined") return "";
-  return localStorage.getItem(URL_KEY) ?? "";
+  return localStorage.getItem(URL_KEY) ?? DEFAULT_APPS_SCRIPT_URL;
 }
 
 export function setAppsScriptUrl(url: string) {
@@ -34,6 +36,16 @@ export function getEmailLogs(): EmailLog[] {
 function pushLog(log: EmailLog) {
   const all = [log, ...getEmailLogs()].slice(0, 100);
   localStorage.setItem(LOG_KEY, JSON.stringify(all));
+}
+
+function extractErrorMessage(payload: unknown, fallback: string) {
+  if (typeof payload !== "string") return fallback;
+
+  const htmlError = payload.match(/<div[^>]*>([^<]*(?:TypeError|ReferenceError|Exception):[^<]*)<\/div>/i)?.[1];
+  if (htmlError) return htmlError.trim();
+
+  const bodyText = payload.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return bodyText || fallback;
 }
 
 export function clearEmailLogs() {
@@ -109,7 +121,7 @@ export async function sendVisitToAppsScript(
       status: ok ? "enviado" : "erro",
       message: ok
         ? "Planilha atualizada e e-mails disparados."
-        : `Resposta inesperada (HTTP ${res.status}).`,
+        : extractErrorMessage(parsed, `Resposta inesperada (HTTP ${res.status}).`),
       response: parsed,
     };
     pushLog(log);
