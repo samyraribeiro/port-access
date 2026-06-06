@@ -1,7 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Lock, CheckCircle2, XCircle, Eye, Clock, ListChecks, ShieldCheck, ShieldX } from "lucide-react";
+import { Lock, CheckCircle2, XCircle, Eye, Clock, ListChecks, ShieldCheck, ShieldX, Link2, Save, Trash2, Mail } from "lucide-react";
 import { getVisits, updateStatus, type Visit, type VisitStatus } from "../lib/visits";
+import {
+  getAppsScriptUrl,
+  setAppsScriptUrl,
+  getEmailLogs,
+  clearEmailLogs,
+  type EmailLog,
+} from "../lib/appsScript";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Dashboard — Wilson Sons" }] }),
