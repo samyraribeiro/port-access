@@ -243,7 +243,157 @@ function AdminPanel() {
           </div>
         </div>
       )}
+
+      <IntegrationPanel />
+      <LogsPanel />
     </div>
+  );
+}
+
+function IntegrationPanel() {
+  const [url, setUrl] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setUrl(getAppsScriptUrl());
+  }, []);
+
+  return (
+    <section className="mt-10 rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <div className="flex items-center gap-3">
+        <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary text-primary-foreground">
+          <Link2 className="h-5 w-5" />
+        </span>
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Integração Google Sheets</h2>
+          <p className="text-sm text-muted-foreground">
+            Cole aqui a URL <code>/exec</code> do Web App do Google Apps Script.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+        <input
+          value={url}
+          onChange={(e) => {
+            setUrl(e.target.value);
+            setSaved(false);
+          }}
+          placeholder="https://script.google.com/macros/s/AKfycb.../exec"
+          className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+        />
+        <button
+          onClick={() => {
+            setAppsScriptUrl(url);
+            setSaved(true);
+          }}
+          className="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-5 py-2 text-sm font-semibold text-accent-foreground"
+        >
+          <Save className="h-4 w-4" /> Salvar
+        </button>
+      </div>
+      {saved && (
+        <p className="mt-2 text-xs text-accent">URL salva. Próximos agendamentos serão enviados para o Apps Script.</p>
+      )}
+
+      <details className="mt-6 rounded-lg border border-border bg-secondary/50 p-4 text-sm text-muted-foreground">
+        <summary className="cursor-pointer font-medium text-foreground">Como publicar o Apps Script</summary>
+        <ol className="mt-3 list-decimal space-y-1 pl-5">
+          <li>Abra <code>script.google.com</code> e crie um novo projeto.</li>
+          <li>Cole o conteúdo de <code>apps-script/Code.gs</code> deste repositório.</li>
+          <li>Ajuste <code>SHEET_ID</code> para o ID da sua planilha do Google Sheets.</li>
+          <li>Execute a função <code>setup()</code> uma vez (concede permissões).</li>
+          <li>Implantar → Nova implantação → "App da Web" → executar como <em>Eu</em>, acesso <em>Qualquer pessoa</em>.</li>
+          <li>Copie a URL terminada em <code>/exec</code> e cole acima.</li>
+        </ol>
+      </details>
+    </section>
+  );
+}
+
+function LogsPanel() {
+  const [logs, setLogs] = useState<EmailLog[]>([]);
+  const refresh = () => setLogs(getEmailLogs());
+  useEffect(refresh, []);
+
+  const badge = (s: EmailLog["status"]) => {
+    if (s === "enviado") return "bg-accent/15 text-accent border-accent/30";
+    if (s === "nao_configurado") return "bg-amber-500/15 text-amber-600 border-amber-500/30";
+    return "bg-destructive/15 text-destructive border-destructive/30";
+  };
+  const label = (s: EmailLog["status"]) =>
+    s === "enviado" ? "Enviado" : s === "nao_configurado" ? "Não configurado" : "Erro";
+
+  return (
+    <section className="mt-8 rounded-2xl border border-border bg-card shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
+        <div className="flex items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary text-primary-foreground">
+            <Mail className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Logs de envio</h2>
+            <p className="text-sm text-muted-foreground">Últimas {logs.length} tentativas de integração.</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={refresh}
+            className="rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground"
+          >
+            Atualizar
+          </button>
+          <button
+            onClick={() => {
+              clearEmailLogs();
+              refresh();
+            }}
+            className="inline-flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm font-medium text-destructive"
+          >
+            <Trash2 className="h-4 w-4" /> Limpar
+          </button>
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
+          <thead>
+            <tr className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+              <th className="px-4 py-3">Quando</th>
+              <th className="px-4 py-3">Protocolo</th>
+              <th className="px-4 py-3">Destinatários</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Detalhe</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                  Nenhum envio registrado ainda.
+                </td>
+              </tr>
+            ) : (
+              logs.map((l) => (
+                <tr key={l.id} className="border-t border-border align-top">
+                  <td className="px-4 py-3 text-muted-foreground">{new Date(l.at).toLocaleString()}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-foreground">{l.protocolo}</td>
+                  <td className="px-4 py-3 text-foreground">
+                    <div>👤 {l.recipients.visitor}</div>
+                    <div>🛠 {l.recipients.host || "—"}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold ${badge(l.status)}`}>
+                      {label(l.status)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{l.message ?? "—"}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 
