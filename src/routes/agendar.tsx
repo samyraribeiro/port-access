@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { CheckCircle2, Lock, Copy, ArrowRight } from "lucide-react";
+import { CheckCircle2, Lock, Copy, ArrowRight, Mail, AlertTriangle, Loader2 } from "lucide-react";
 import { addVisit, getQuizScore, quizPassed, type Visit } from "../lib/visits";
+import { sendVisitToAppsScript, type EmailLog } from "../lib/appsScript";
 
 export const Route = createFileRoute("/agendar")({
   head: () => ({ meta: [{ title: "Agendar Visita — Wilson Sons" }] }),
@@ -31,6 +32,8 @@ const inputClass =
 function Agendar() {
   const allowed = typeof window !== "undefined" ? quizPassed() : false;
   const [submitted, setSubmitted] = useState<Visit | null>(null);
+  const [emailLog, setEmailLog] = useState<EmailLog | null>(null);
+  const [sending, setSending] = useState(false);
   const [form, setForm] = useState({
     nome: "",
     email: "",
@@ -42,6 +45,7 @@ function Agendar() {
     horario: "",
     host: "",
   });
+  const [hostEmail, setHostEmail] = useState("");
 
   if (!allowed) {
     return (
